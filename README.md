@@ -2,7 +2,7 @@
 
 Simple script to get the certificate info of a website.
 
-Uses only the Python standard library.
+Uses only the Python standard library. Caches results in `/tmp` for an hour.
 
 ## Minimum Requirements
 
@@ -50,3 +50,8 @@ Issuer:               CN=WR2, O=Google Trust Services
 Valid from:           2024-06-24 06:35:44-05:00
 Valid until:          2024-09-16 06:35:43-05:00
 ```
+
+## TODO
+
+* Compile to a binary
+  * cf. [PyInstaller](https://www.pyinstaller.org/) or [PyOxidizer](https://pyoxidizer.readthedocs.io/en/stable/)

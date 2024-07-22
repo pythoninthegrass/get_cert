@@ -1,8 +1,6 @@
 name: Release Please
 
 on:
-  push:
-    branches: ['main', 'master']
   workflow_run:
     workflows: ["Build Executables"]
     types:
@@ -16,9 +14,7 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
-      github.event_name == 'push'
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}

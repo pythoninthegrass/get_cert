@@ -31,6 +31,7 @@ MANIFEST
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
+!get_cert.spec
 
 # Installer logs
 pip-log.txt
@@ -177,13 +178,13 @@ Icon
 .fseventsd
 .Spotlight-V100
 .TemporaryItems
+.VolumeIcon.icns
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 
 # Directories potentially created on remote AFP share
 .AppleDB
-.AppleDesktop
 Network Trash Folder
 Temporary Items
 .apdisk

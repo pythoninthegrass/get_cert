@@ -63,14 +63,19 @@ jobs:
       run: |
         pyinstaller get_cert.spec --clean
 
-    - name: Create renamed archive
+    - name: Create renamed archive (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
       run: |
         cd dist
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          7z a get_cert_${{ runner.os }}_${{ matrix.arch }}.zip get_cert.exe
-        else
-          zip get_cert_${{ runner.os }}_${{ matrix.arch }}.zip get_cert
-        fi
+        zip get_cert_${{ runner.os }}_${{ matrix.arch }}.zip get_cert
+
+    - name: Create renamed archive (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        cd dist
+        Compress-Archive -Path get_cert.exe -DestinationPath get_cert_${{ runner.os }}_${{ matrix.arch }}.zip
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2

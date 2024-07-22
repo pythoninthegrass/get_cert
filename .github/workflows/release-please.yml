@@ -1,11 +1,20 @@
 name: Release Please
 
 on:
-  workflow_run:
-    workflows: ["Build Executables"]
-    types:
-      - completed
+  push:
     branches: ['main', 'master']
+    paths:
+      - 'get_cert.py'
+      - 'get_cert.spec'
+      - 'requirements.txt'
+      - '*.md'
+  pull_request:
+    branches: ['main', 'master']
+    paths:
+      - 'get_cert.py'
+      - 'get_cert.spec'
+      - 'requirements.txt'
+      - '*.md'
 
 permissions:
   contents: write
@@ -14,7 +23,6 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -41,7 +49,7 @@ jobs:
         with:
           workflow: build.yml
           workflow_conclusion: success
-          branch: ${{ github.event_name == 'push' && github.ref_name || github.event.workflow_run.head_branch }}
+          branch: ${{ github.event_name == 'push' && github.ref_name || github.ref }}
           path: artifacts
           if_no_artifact_found: warn
 

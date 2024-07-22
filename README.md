@@ -12,6 +12,7 @@ Uses only the Python standard library. Caches results in `/tmp` for an hour.
 
 ## Recommended Requirements
 
+* [devbox](https://www.jetify.com/devbox/docs/installing_devbox/)
 * [asdf](https://asdf-vm.com/#/core-manage-asdf-vm)
 
 ## Installation
@@ -51,7 +52,23 @@ Valid from:           2024-06-24 06:35:44-05:00
 Valid until:          2024-09-16 06:35:43-05:00
 ```
 
+## Development
+
+### Packaging
+
+```bash
+# activate dev environment
+devbox shell
+
+# compile to a binary
+pyinstaller get_cert.spec --clean 
+
+# deactivate dev environment
+exit
+```
+
 ## TODO
 
 * Compile to a binary
-  * cf. [PyInstaller](https://www.pyinstaller.org/) or [PyOxidizer](https://pyoxidizer.readthedocs.io/en/stable/)
+  * cf. [PyInstaller](https://www.pyinstaller.org/) or ~~[PyOxidizer](https://pyoxidizer.readthedocs.io/en/stable/)~~
+    * Latter doesn't support Python 3.11+

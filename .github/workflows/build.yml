@@ -61,13 +61,22 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        pyinstaller get_cert.spec --clean --name "get_cert_${{ runner.os }}_${{ matrix.arch }}"
+        pyinstaller get_cert.spec --clean
+
+    - name: Create renamed archive
+      run: |
+        cd dist
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          7z a get_cert_${{ runner.os }}_${{ matrix.arch }}.zip get_cert.exe
+        else
+          zip get_cert_${{ runner.os }}_${{ matrix.arch }}.zip get_cert
+        fi
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: get_cert_${{ runner.os }}_${{ matrix.arch }}
-        path: dist/get_cert_*
+        path: dist/get_cert_${{ runner.os }}_${{ matrix.arch }}.zip
 
   create-release:
     needs: build
@@ -91,10 +100,10 @@ jobs:
 
     - name: Upload Release Assets
       run: |
-        for file in get_cert_*/*; do
+        for file in get_cert_*/*.zip; do
           asset_name=$(basename $file)
           curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Content-Type: application/octet-stream" \
+               -H "Content-Type: application/zip" \
                --data-binary @"$file" \
                "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=${asset_name}"
         done

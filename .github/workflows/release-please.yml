@@ -32,15 +32,6 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  upload-release-assets:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download workflow artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -48,16 +39,25 @@ jobs:
           workflow_conclusion: success
           branch: ${{ github.event_name == 'push' && github.ref_name || github.event.workflow_run.head_branch }}
           path: artifacts
-          if_no_artifact_found: warn
+          if_no_artifact_found: fail
+
+      - name: Wait for assets to be created
+        id: wait-for-assets
+        run: |
+          while [ ! -d "artifacts" ] || [ -z "$(ls -A artifacts)" ]; do
+            echo "Waiting for assets to be created..."
+            sleep 10
+          done
 
       - name: Upload Release Assets
+        if: steps.wait-for-assets.outputs.exit_code == '0'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -d "artifacts" ] && [ "$(ls -A artifacts)" ]; then
             for file in artifacts/*/*.zip; do
-              gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
+              gh release upload ${{ steps.release.outputs.tag_name }} "$file" --clobber
             done
-          else
+              else
             echo "No artifacts found to upload"
           fi

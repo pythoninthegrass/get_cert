@@ -3,6 +3,11 @@ name: Release Please
 on:
   push:
     branches: ['main', 'master']
+  workflow_run:
+    workflows: ["Build Executables"]
+    types:
+      - completed
+    branches: ['main', 'master']
 
 permissions:
   contents: write
@@ -11,6 +16,9 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'push'
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -38,14 +46,18 @@ jobs:
         with:
           workflow: build.yml
           workflow_conclusion: success
-          branch: main
+          branch: ${{ github.event_name == 'push' && github.ref_name || github.event.workflow_run.head_branch }}
           path: artifacts
-          if_no_artifact_found: fail
+          if_no_artifact_found: warn
 
       - name: Upload Release Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in artifacts/*/*.zip; do
-            gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
-          done
+          if [ -d "artifacts" ] && [ "$(ls -A artifacts)" ]; then
+            for file in artifacts/*/*.zip; do
+              gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
+            done
+          else
+            echo "No artifacts found to upload"
+          fi

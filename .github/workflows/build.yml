@@ -3,8 +3,16 @@ name: Build Executables
 on:
   push:
     branches: ['main', 'master']
+    paths:
+      - 'get_cert.py'
+      - 'get_cert.spec'
+      - 'requirements.txt'
   pull_request:
     branches: ['main', 'master']
+    paths:
+      - 'get_cert.py'
+      - 'get_cert.spec'
+      - 'requirements.txt'
   workflow_dispatch:
   workflow_call:
 

@@ -88,7 +88,9 @@ jobs:
         cd dist
         os_lower=$(echo ${{ runner.os }} | tr '[:upper:]' '[:lower:]')
         arch_lower=$(echo ${{ matrix.arch }} | tr '[:upper:]' '[:lower:]')
-        zip get_cert_${os_lower}_${arch_lower}.zip get_cert
+        zip_name="get_cert_${os_lower}_${arch_lower}.zip"
+        zip "$zip_name" get_cert
+        echo "ZIP_NAME=$zip_name" >> $GITHUB_ENV
 
     - name: Create renamed archive (Windows)
       if: runner.os == 'Windows'
@@ -97,40 +99,12 @@ jobs:
         cd dist
         $os_lower = '${{ runner.os }}'.ToLower()
         $arch_lower = '${{ matrix.arch }}'.ToLower()
-        Compress-Archive -Path get_cert.exe -DestinationPath "get_cert_${os_lower}_${arch_lower}.zip"
+        $zip_name = "get_cert_${os_lower}_${arch_lower}.zip"
+        Compress-Archive -Path get_cert.exe -DestinationPath $zip_name
+        echo "ZIP_NAME=$zip_name" >> $env:GITHUB_ENV
 
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: get_cert_${{ runner.os }}_${{ matrix.arch }}
-        path: dist/get_cert_${{ runner.os }}_${{ matrix.arch }}.zip
-
-  create-release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v2
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
-
-    - name: Upload Release Assets
-      run: |
-        for file in get_cert_*/*.zip; do
-          asset_name=$(basename $file)
-          curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Content-Type: application/zip" \
-               --data-binary @"$file" \
-               "https://uploads.github.com/repos/${{ github.repository }}/releases/${{ steps.create_release.outputs.id }}/assets?name=${asset_name}"
-        done
+        name: ${{ env.ZIP_NAME }}
+        path: dist/${{ env.ZIP_NAME }}

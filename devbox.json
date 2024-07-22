@@ -1,0 +1,29 @@
+{
+  "packages": {
+    "python":                "3.11.9",
+    "python311Packages.pip": "latest",
+    "asdf-vm":               "latest",
+    "git":                   "latest",
+    "gnumake":               "latest",
+    "go-task":               "latest",
+    "nodejs":                "21.4.0",
+    "openssl":               "latest",
+    "upx":                   "latest",
+    "uv":                    "latest"
+  },
+  "env": {
+    "VENV_DIR": ".venv"
+  },
+  "shell": {
+    "init_hook": [
+      ". $VENV_DIR/bin/activate",
+      "uv pip install -r requirements.txt"
+    ],
+    "scripts": {
+      "install":     "uv pip install -r requirements.txt",
+      "export-reqs": "uv pip freeze | uv pip compile - -o requirements.txt",
+      "venv":        "uv venv ${VENV_DIR} --allow-existing",
+      "test":        "poetry run pytest"
+    }
+  }
+}

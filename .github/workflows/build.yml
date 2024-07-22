@@ -105,7 +105,7 @@ jobs:
         echo "ZIP_NAME=$zip_name" >> $env:GITHUB_ENV
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: dist/${{ env.ZIP_NAME }}

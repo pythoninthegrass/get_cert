@@ -24,10 +24,6 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
-
     steps:
       - name: Release with release-please
         id: release
@@ -39,7 +35,7 @@ jobs:
 
   upload-assets:
     needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -49,37 +45,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get the latest successful run ID of the build workflow
-          run_id=$(gh run list --workflow=build.yml --branch main --status completed --json databaseId --jq '.[0].databaseId')
-
-          if [ -z "$run_id" ]; then
-            echo "No successful build found. Exiting."
-            exit 0
-          fi
-
-          # Download artifacts from the latest successful build
+          # Get the latest successful build artifacts
+          run_id=$(gh run list --workflow=build.yml --branch main --status completed --limit 1 --json databaseId --jq '.[0].databaseId')
           gh run download $run_id
 
-          # Check if tag_name is not empty
-          if [ -z "${{ needs.release-please.outputs.tag_name }}" ]; then
-            echo "No tag name provided. Exiting."
-            exit 0
-          fi
+          # Get existing release assets
+          existing_assets=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json assets --jq '.assets[].name')
 
-          # Get the list of current release assets
-          existing_assets=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json assets --jq '.assets[].name' 2>/dev/null)
-
-          # Upload new artifacts that don't already exist in the release
+          # Upload new artifacts
+          uploaded=false
           for file in */*.zip; do
-            if [ ! -f "$file" ]; then
-              echo "No zip files found. Exiting."
-              exit 0
-            fi
-            filename=$(basename "$file")
-            if ! echo "$existing_assets" | grep -q "$filename"; then
-              gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
-              echo "Uploaded $filename to release"
-            else
-              echo "Skipped $filename (already exists in release)"
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if ! echo "$existing_assets" | grep -q "$filename"; then
+                gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
+                echo "Uploaded $filename to release"
+                uploaded=true
+              fi
             fi
           done
+
+          $uploaded || echo "No new artifacts were uploaded to the release."

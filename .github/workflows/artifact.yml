@@ -8,7 +8,11 @@ permissions:
   contents: write
 
 jobs:
-  attach-artifact:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  attach:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,20 +26,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          release_tag="${{ github.event.release.tag_name }}"
+          release_tag="${{ inputs.release_tag || github.event.release.tag_name }}"
+
+          if [ -z "$release_tag" ]; then
+            echo "Error: No release tag provided"
+            exit 1
+          fi
 
           # Get existing release assets
           existing_assets=$(gh release view "$release_tag" --json assets --jq '.assets[].name')
 
           # Upload new artifacts
+          uploaded=false
           for file in artifacts/*/*.zip; do
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               if ! echo "$existing_assets" | grep -q "$filename"; then
                 gh release upload "$release_tag" "$file" --clobber
                 echo "Uploaded $filename to release $release_tag"
+                uploaded=true
               else
                 echo "Skipped $filename (already exists in release $release_tag)"
               fi
             fi
           done
+
+          $uploaded || echo "No new artifacts were uploaded to the release."

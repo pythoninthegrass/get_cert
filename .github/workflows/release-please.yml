@@ -1,13 +1,14 @@
 name: Release Please
 
+# TODO: revert branches and paths
 on:
   push:
-    branches: ['main', 'master']
-    paths:
-      - 'get_cert.py'
-      - 'get_cert.spec'
-      - 'requirements.txt'
-      - '*.md'
+    # branches: ['main', 'master']
+    # paths:
+    #   - 'get_cert.py'
+    #   - 'get_cert.spec'
+    #   - 'requirements.txt'
+    #   - '*.md'
   pull_request:
     branches: ['main', 'master']
     paths:
@@ -36,57 +37,49 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  download-artifacts:
+  upload-assets:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
-    outputs:
-      artifacts_found: ${{ steps.check-artifacts.outputs.artifacts_found }}
 
     steps:
-      - name: Download workflow artifacts
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: build.yml
-          workflow_conclusion: success
-          branch: ${{ github.event_name == 'push' && github.ref_name || github.ref }}
-          path: artifacts
-          if_no_artifact_found: warn
+      - uses: actions/checkout@v4
 
-      - name: Check for artifacts
-        id: check-artifacts
-        run: |
-          if [ -d "artifacts" ] && [ "$(ls -A artifacts)" ]; then
-            echo "artifacts_found=true" >> $GITHUB_OUTPUT
-          else
-            echo "artifacts_found=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        if: steps.check-artifacts.outputs.artifacts_found == 'true'
-        with:
-          name: release-artifacts
-          path: artifacts
-
-  upload-release-assets:
-    needs: [release-please, download-artifacts]
-    if: >
-      needs.release-please.outputs.release_created == 'true' &&
-      needs.download-artifacts.outputs.artifacts_found == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: release-artifacts
-          path: artifacts
-
-      - name: Upload Release Assets
+      - name: Download and upload artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          for file in artifacts/*/*.zip; do
-            gh release upload ${{ needs.release-please.outputs.tag_name }} $file --clobber
+          # Get the latest successful run ID of the build workflow
+          run_id=$(gh run list --workflow=build.yml --branch main --status completed --json databaseId --jq '.[0].databaseId')
+
+          if [ -z "$run_id" ]; then
+            echo "No successful build found. Exiting."
+            exit 0
+          fi
+
+          # Download artifacts from the latest successful build
+          gh run download $run_id
+
+          # Check if tag_name is not empty
+          if [ -z "${{ needs.release-please.outputs.tag_name }}" ]; then
+            echo "No tag name provided. Exiting."
+            exit 0
+          fi
+
+          # Get the list of current release assets
+          existing_assets=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json assets --jq '.assets[].name' 2>/dev/null)
+
+          # Upload new artifacts that don't already exist in the release
+          for file in */*.zip; do
+            if [ ! -f "$file" ]; then
+              echo "No zip files found. Exiting."
+              exit 0
+            fi
+            filename=$(basename "$file")
+            if ! echo "$existing_assets" | grep -q "$filename"; then
+              gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
+              echo "Uploaded $filename to release"
+            else
+              echo "Skipped $filename (already exists in release)"
+            fi
           done

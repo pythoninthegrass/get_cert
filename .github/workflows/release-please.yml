@@ -33,24 +33,29 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-  upload-assets:
-    needs: release-please
-    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
-    runs-on: ubuntu-latest
-
-    steps:
       - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.releases_created }}
 
       - name: Download and upload artifacts
+        if: ${{ steps.release.outputs.releases_created }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [ -z "${{ steps.release.outputs.tag_name }}" ]; then
+            echo "No tag name provided. Skipping artifact upload."
+            exit 0
+          fi
+
           # Get the latest successful build artifacts
           run_id=$(gh run list --workflow=build.yml --branch main --status completed --limit 1 --json databaseId --jq '.[0].databaseId')
+          if [ -z "$run_id" ]; then
+            echo "No successful build found. Skipping artifact upload."
+            exit 0
+          fi
           gh run download $run_id
 
           # Get existing release assets
-          existing_assets=$(gh release view ${{ needs.release-please.outputs.tag_name }} --json assets --jq '.assets[].name')
+          existing_assets=$(gh release view "${{ steps.release.outputs.tag_name }}" --json assets --jq '.assets[].name' || echo "")
 
           # Upload new artifacts
           uploaded=false
@@ -58,7 +63,7 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file")
               if ! echo "$existing_assets" | grep -q "$filename"; then
-                gh release upload ${{ needs.release-please.outputs.tag_name }} "$file" --clobber
+                gh release upload "${{ steps.release.outputs.tag_name }}" "$file" --clobber
                 echo "Uploaded $filename to release"
                 uploaded=true
               fi

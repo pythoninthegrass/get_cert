@@ -70,5 +70,19 @@ exit
 ## TODO
 
 * Compile to a binary
-  * cf. [PyInstaller](https://www.pyinstaller.org/) or ~~[PyOxidizer](https://pyoxidizer.readthedocs.io/en/stable/)~~
-    * Latter doesn't support Python 3.11+
+  * Add [argv emulation](https://pyinstaller.org/en/stable/feature-notes.html?highlight=codesign-identity#optional-argv-emulation)
+  * Debug error output
+    ```bash
+    Traceback (most recent call last):
+    File "get_cert.py", line 123, in <module>
+    File "get_cert.py", line 118, in main
+    File "get_cert.py", line 65, in get_certificate
+    File "ssl.py", line 517, in wrap_socket
+    File "ssl.py", line 1104, in _create
+    File "ssl.py", line 1382, in do_handshake
+    ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1006)
+    [26193] Failed to execute script 'get_cert' due to unhandled exception!
+    ```
+* [Sign the macOS binary](https://pyinstaller.org/en/stable/feature-notes.html?highlight=codesign-identity#macos-binary-code-signing)
+  * Try [quill](https://github.com/anchore/quill)
+* Reduce linux x86_64 binary size (~17MB vs. 7MB)

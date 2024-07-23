@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/pythoninthegrass/get_cert/compare/v0.1.3...v0.1.4) (2024-07-23)
+
+
+### Miscellaneous Chores
+
+* release 0.1.4 ([3ea7191](https://github.com/pythoninthegrass/get_cert/commit/3ea7191486e3c7560ce61c449ccd8cb02d323c71))
+
 ## [0.1.3](https://github.com/pythoninthegrass/get_cert/compare/v0.1.2...v0.1.3) (2024-07-23)
 
 

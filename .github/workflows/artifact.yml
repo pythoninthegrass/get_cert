@@ -1,0 +1,41 @@
+name: Attach artifact to release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  attach-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          release_tag="${{ github.event.release.tag_name }}"
+
+          # Get existing release assets
+          existing_assets=$(gh release view "$release_tag" --json assets --jq '.assets[].name')
+
+          # Upload new artifacts
+          for file in artifacts/*/*.zip; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file")
+              if ! echo "$existing_assets" | grep -q "$filename"; then
+                gh release upload "$release_tag" "$file" --clobber
+                echo "Uploaded $filename to release $release_tag"
+              else
+                echo "Skipped $filename (already exists in release $release_tag)"
+              fi
+            fi
+          done

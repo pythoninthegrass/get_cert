@@ -10,7 +10,7 @@ packaging==24.1
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib
-pip==24.1.2
+pip==24.2
 pyinstaller==6.9.0
 pyinstaller-hooks-contrib==2024.7
     # via pyinstaller

@@ -14,7 +14,7 @@ pip==24.1.2
 pyinstaller==6.9.0
 pyinstaller-hooks-contrib==2024.7
     # via pyinstaller
-setuptools==71.1.0
+setuptools==74.1.2
     # via
     #   pyinstaller
     #   pyinstaller-hooks-contrib

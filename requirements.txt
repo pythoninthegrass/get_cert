@@ -11,7 +11,7 @@ packaging==24.1
     #   pyinstaller
     #   pyinstaller-hooks-contrib
 pip==24.1.2
-pyinstaller==6.9.0
+pyinstaller==6.11.0
 pyinstaller-hooks-contrib==2024.7
     # via pyinstaller
 setuptools==71.1.0
